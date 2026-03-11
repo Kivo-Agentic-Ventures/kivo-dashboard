@@ -49,5 +49,9 @@ export async function fetchVentures(): Promise<Venture[]> {
       valueProposition: getRichText(page, "Value Proposition"),
       siteUrl: getUrl(page, "Site URL"),
       repoUrl: getUrl(page, "Repo URL"),
+      monthlyRevenue: getNumber(page, "Monthly Revenue"),
+      totalRevenue: getNumber(page, "Total Revenue"),
+      visitors: getNumber(page, "Visitors"),
+      conversions: getNumber(page, "Conversions"),
     }));
 }

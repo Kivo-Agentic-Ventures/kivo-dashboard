@@ -20,6 +20,10 @@ export interface Venture {
   valueProposition: string;
   siteUrl: string | null;
   repoUrl: string | null;
+  monthlyRevenue: number;
+  totalRevenue: number;
+  visitors: number;
+  conversions: number;
 }
 
 export type Stage = "research" | "build" | "deploy" | "marketing" | "complete" | "failed";
