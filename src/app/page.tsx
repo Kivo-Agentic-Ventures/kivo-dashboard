@@ -1,101 +1,135 @@
-import Image from "next/image";
+import { fetchIdeas, fetchVentures } from "@/lib/notion";
+import type { Stage } from "@/lib/types";
+import { STAGES } from "@/lib/types";
+import ScoreBadge from "@/components/score-badge";
+import StageBadge from "@/components/stage-badge";
+import RefreshButton from "@/components/refresh-button";
+import Link from "next/link";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+export const revalidate = 60;
+
+const STAGE_COLORS: Record<Stage, string> = {
+  research: "bg-purple-500",
+  build: "bg-blue-500",
+  deploy: "bg-cyan-500",
+  marketing: "bg-amber-500",
+  complete: "bg-green-500",
+  failed: "bg-red-500",
+};
+
+export default async function HomePage() {
+  const [ideas, ventures] = await Promise.all([fetchIdeas(), fetchVentures()]);
+
+  const pursueCount = ideas.filter((i) => i.shouldPursue).length;
+  const avgScore = ideas.length > 0
+    ? Math.round(ideas.reduce((sum, i) => sum + i.score, 0) / ideas.length)
+    : 0;
+
+  const stageCounts = STAGES.reduce(
+    (acc, stage) => {
+      acc[stage] = ventures.filter((v) => v.stage === stage).length;
+      return acc;
+    },
+    {} as Record<Stage, number>,
+  );
+
+  const recentIdeas = ideas.slice(0, 5);
+  const activeVentures = ventures.filter((v) => v.stage !== "complete" && v.stage !== "failed").slice(0, 5);
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-sm text-gray-500 mt-1">Kivo Ventures overview</p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <RefreshButton />
+      </div>
+
+      {/* Stats cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <StatCard label="Total Ideas" value={ideas.length} />
+        <StatCard label="Should Pursue" value={pursueCount} />
+        <StatCard label="Avg Score" value={avgScore} />
+        <StatCard label="Active Ventures" value={ventures.length - stageCounts.complete - stageCounts.failed} />
+      </div>
+
+      {/* Pipeline stages bar */}
+      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm mb-8">
+        <h2 className="text-sm font-semibold text-gray-700 mb-4">Pipeline Stages</h2>
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+          {STAGES.map((stage) => (
+            <div key={stage} className="text-center">
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <div className={`w-2 h-2 rounded-full ${STAGE_COLORS[stage]}`} />
+                <span className="text-xs text-gray-500 capitalize">{stage}</span>
+              </div>
+              <span className="text-2xl font-bold text-gray-900">{stageCounts[stage]}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Two-column: recent ideas + active ventures */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Ideas */}
+        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+            <h2 className="text-sm font-semibold text-gray-700">Recent Ideas</h2>
+            <Link href="/ideas" className="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+              View all
+            </Link>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {recentIdeas.length === 0 && (
+              <p className="px-5 py-8 text-sm text-gray-400 text-center">No ideas yet</p>
+            )}
+            {recentIdeas.map((idea) => (
+              <div key={idea.id} className="flex items-center justify-between px-5 py-3">
+                <div className="min-w-0 flex-1 mr-3">
+                  <p className="text-sm font-medium text-gray-900 truncate">{idea.title}</p>
+                  <p className="text-xs text-gray-500 truncate">{idea.productName}</p>
+                </div>
+                <ScoreBadge score={idea.score} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Active Ventures */}
+        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+            <h2 className="text-sm font-semibold text-gray-700">Active Ventures</h2>
+            <Link href="/ventures" className="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+              View all
+            </Link>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {activeVentures.length === 0 && (
+              <p className="px-5 py-8 text-sm text-gray-400 text-center">No active ventures</p>
+            )}
+            {activeVentures.map((venture) => (
+              <div key={venture.id} className="flex items-center justify-between px-5 py-3">
+                <div className="min-w-0 flex-1 mr-3">
+                  <p className="text-sm font-medium text-gray-900 truncate">{venture.productName}</p>
+                  <p className="text-xs text-gray-500 truncate">{venture.tagline}</p>
+                </div>
+                <StageBadge stage={venture.stage} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+      <p className="text-xs text-gray-500 font-medium">{label}</p>
+      <p className="text-3xl font-bold text-gray-900 mt-1">{value}</p>
     </div>
   );
 }
