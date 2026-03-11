@@ -1,12 +1,13 @@
 import type { Stage } from "@/lib/types";
+import { cn } from "@/lib/cn";
 
 const STAGE_STYLES: Record<Stage, string> = {
-  research: "bg-purple-100 text-purple-800",
-  build: "bg-blue-100 text-blue-800",
-  deploy: "bg-cyan-100 text-cyan-800",
-  marketing: "bg-amber-100 text-amber-800",
-  complete: "bg-green-100 text-green-800",
-  failed: "bg-red-100 text-red-800",
+  research: "border-purple-200 bg-purple-50 text-purple-700",
+  build: "border-blue-200 bg-blue-50 text-blue-700",
+  deploy: "border-cyan-200 bg-cyan-50 text-cyan-700",
+  marketing: "border-amber-200 bg-amber-50 text-amber-700",
+  complete: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  failed: "border-red-200 bg-red-50 text-red-700",
 };
 
 const STAGE_LABELS: Record<Stage, string> = {
@@ -18,17 +19,18 @@ const STAGE_LABELS: Record<Stage, string> = {
   failed: "Failed",
 };
 
-interface StageBadgeProps {
-  stage: Stage;
-}
-
-export default function StageBadge({ stage }: StageBadgeProps) {
-  const classes = STAGE_STYLES[stage] ?? "bg-gray-100 text-gray-700";
+export default function StageBadge({ stage }: { stage: Stage }) {
+  const classes = STAGE_STYLES[stage] ?? "border-border-soft bg-background-soft text-text-sub";
   const label = STAGE_LABELS[stage] ?? stage;
 
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${classes}`}
+      className={cn(
+        "inline-flex items-center rounded-full px-2.5 py-0.5",
+        "font-mono text-xs font-medium leading-[150%] tracking-[0.6px] uppercase",
+        "border-[0.5px]",
+        classes
+      )}
     >
       {label}
     </span>

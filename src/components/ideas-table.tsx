@@ -1,24 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { ArrowUp, ArrowDown, ArrowUpDown, Check, X } from "lucide-react";
 import type { Idea } from "@/lib/types";
+import { cn } from "@/lib/cn";
 import ScoreBadge from "./score-badge";
 
 type SortKey = keyof Idea;
 type SortDirection = "asc" | "desc";
-
-const MARKET_SIZE_COLORS: Record<string, string> = {
-  Large: "bg-green-100 text-green-800",
-  Medium: "bg-yellow-100 text-yellow-800",
-  Small: "bg-orange-100 text-orange-800",
-  Niche: "bg-gray-100 text-gray-700",
-};
-
-const FEASIBILITY_COLORS: Record<string, string> = {
-  High: "bg-green-100 text-green-800",
-  Medium: "bg-yellow-100 text-yellow-800",
-  Low: "bg-red-100 text-red-800",
-};
 
 interface Column {
   key: SortKey;
@@ -27,11 +16,11 @@ interface Column {
 
 const COLUMNS: Column[] = [
   { key: "title", label: "Idea" },
-  { key: "productName", label: "Product Name" },
+  { key: "productName", label: "Product" },
   { key: "score", label: "Score" },
-  { key: "marketSize", label: "Market Size" },
+  { key: "marketSize", label: "Market" },
   { key: "feasibility", label: "Feasibility" },
-  { key: "shouldPursue", label: "Should Pursue" },
+  { key: "shouldPursue", label: "Pursue" },
   { key: "summary", label: "Summary" },
 ];
 
@@ -49,34 +38,22 @@ function compare(a: Idea, b: Idea, key: SortKey, direction: SortDirection): numb
   return String(valA).localeCompare(String(valB)) * modifier;
 }
 
-function TextBadge({ value, colorMap }: { value: string; colorMap: Record<string, string> }) {
-  const classes = colorMap[value] ?? "bg-gray-100 text-gray-700";
+function TextPill({ value }: { value: string }) {
   return (
-    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${classes}`}>
+    <span className="inline-block rounded-full border-[0.5px] border-border-soft bg-background-soft px-2.5 py-0.5 font-mono text-xs font-medium leading-[150%] tracking-[0.3px] text-text-sub">
       {value || "\u2014"}
     </span>
   );
 }
 
-function PursueIndicator({ value }: { value: boolean }) {
-  if (value) {
-    return <span className="text-green-600 font-semibold text-lg" aria-label="Yes">&check;</span>;
-  }
-  return <span className="text-red-500 font-semibold text-lg" aria-label="No">&times;</span>;
-}
-
 function SortIcon({ active, direction }: { active: boolean; direction: SortDirection }) {
-  if (!active) {
-    return <span className="ml-1 text-gray-300">&uarr;&darr;</span>;
-  }
-  return <span className="ml-1 text-indigo-600">{direction === "asc" ? "\u2191" : "\u2193"}</span>;
+  if (!active) return <ArrowUpDown className="ml-1 h-3 w-3 text-text-muted" />;
+  return direction === "asc"
+    ? <ArrowUp className="ml-1 h-3 w-3 text-brand" />
+    : <ArrowDown className="ml-1 h-3 w-3 text-brand" />;
 }
 
-interface IdeasTableProps {
-  ideas: Idea[];
-}
-
-export default function IdeasTable({ ideas }: IdeasTableProps) {
+export default function IdeasTable({ ideas }: { ideas: Idea[] }) {
   const [sortKey, setSortKey] = useState<SortKey>("score");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
@@ -92,60 +69,71 @@ export default function IdeasTable({ ideas }: IdeasTableProps) {
   const sorted = [...ideas].sort((a, b) => compare(a, b, sortKey, sortDirection));
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
-      <table className="min-w-full divide-y divide-gray-200 text-sm">
-        <thead className="sticky top-0 bg-gray-50">
-          <tr>
-            {COLUMNS.map((col) => (
-              <th
-                key={col.key}
-                onClick={() => handleSort(col.key)}
-                className="cursor-pointer select-none whitespace-nowrap px-4 py-3 text-left font-semibold text-gray-600 hover:text-indigo-600 transition-colors"
+    <div className="rounded-2xl border border-border-surface bg-background-main shadow-button-sm overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="min-w-full text-sm/[150%]">
+          <thead>
+            <tr className="border-b border-border-surface">
+              {COLUMNS.map((col) => (
+                <th
+                  key={col.key}
+                  onClick={() => handleSort(col.key)}
+                  className={cn(
+                    "cursor-pointer select-none whitespace-nowrap px-4 py-3 text-left",
+                    "font-mono text-xs font-medium tracking-[0.6px] uppercase text-text-soft",
+                    "transition-[color] duration-100 hover:text-text-main"
+                  )}
+                >
+                  <span className="inline-flex items-center">
+                    {col.label}
+                    <SortIcon active={sortKey === col.key} direction={sortDirection} />
+                  </span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map((idea) => (
+              <tr
+                key={idea.id}
+                className="border-b border-border-sub last:border-b-0 transition-[background-color] duration-100 hover:bg-background-soft"
               >
-                {col.label}
-                <SortIcon active={sortKey === col.key} direction={sortDirection} />
-              </th>
+                <td className="px-4 py-3 font-medium text-text-main max-w-xs truncate">
+                  {idea.title}
+                </td>
+                <td className="px-4 py-3 text-text-sub whitespace-nowrap">
+                  {idea.productName || "\u2014"}
+                </td>
+                <td className="px-4 py-3">
+                  <ScoreBadge score={idea.score} />
+                </td>
+                <td className="px-4 py-3">
+                  <TextPill value={idea.marketSize} />
+                </td>
+                <td className="px-4 py-3">
+                  <TextPill value={idea.feasibility} />
+                </td>
+                <td className="px-4 py-3 text-center">
+                  {idea.shouldPursue
+                    ? <Check className="h-4 w-4 text-brand mx-auto" />
+                    : <X className="h-4 w-4 text-text-muted mx-auto" />
+                  }
+                </td>
+                <td className="px-4 py-3 text-text-sub max-w-md truncate">
+                  {idea.summary || "\u2014"}
+                </td>
+              </tr>
             ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {sorted.map((idea, index) => (
-            <tr
-              key={idea.id}
-              className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50/50"} hover:bg-indigo-50/40 transition-colors`}
-            >
-              <td className="px-4 py-3 font-medium text-gray-900 max-w-xs truncate">
-                {idea.title}
-              </td>
-              <td className="px-4 py-3 text-gray-700 whitespace-nowrap">
-                {idea.productName || "\u2014"}
-              </td>
-              <td className="px-4 py-3">
-                <ScoreBadge score={idea.score} />
-              </td>
-              <td className="px-4 py-3">
-                <TextBadge value={idea.marketSize} colorMap={MARKET_SIZE_COLORS} />
-              </td>
-              <td className="px-4 py-3">
-                <TextBadge value={idea.feasibility} colorMap={FEASIBILITY_COLORS} />
-              </td>
-              <td className="px-4 py-3 text-center">
-                <PursueIndicator value={idea.shouldPursue} />
-              </td>
-              <td className="px-4 py-3 text-gray-600 max-w-md truncate">
-                {idea.summary || "\u2014"}
-              </td>
-            </tr>
-          ))}
-          {sorted.length === 0 && (
-            <tr>
-              <td colSpan={COLUMNS.length} className="px-4 py-12 text-center text-gray-400">
-                No ideas found.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+            {sorted.length === 0 && (
+              <tr>
+                <td colSpan={COLUMNS.length} className="px-4 py-16 text-center text-text-soft text-sm/[150%]">
+                  No ideas found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

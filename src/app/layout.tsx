@@ -27,10 +27,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 font-[family-name:var(--font-geist-sans)]`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background-main font-[family-name:var(--font-geist-sans)]`}
       >
         <Nav />
-        <main>{children}</main>
+        <main className="pt-4">{children}</main>
       </body>
     </html>
   );

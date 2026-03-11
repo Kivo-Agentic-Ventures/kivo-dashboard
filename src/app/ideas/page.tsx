@@ -9,19 +9,19 @@ export default async function IdeasPage() {
   const ideas = await fetchIdeas();
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900">Ideas</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              {ideas.length} idea{ideas.length !== 1 ? "s" : ""} triaged from inbox
-            </p>
-          </div>
-          <RefreshButton />
+    <div className="max-w-[1022px] mx-auto px-6 md:px-8 py-8 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-medium leading-[130%] tracking-[-0.24px] text-text-main">
+            Ideas
+          </h1>
+          <p className="text-sm/[150%] text-text-soft mt-1">
+            {ideas.length} idea{ideas.length !== 1 ? "s" : ""} triaged from inbox
+          </p>
         </div>
-        <IdeasTable ideas={ideas} />
+        <RefreshButton />
       </div>
-    </main>
+      <IdeasTable ideas={ideas} />
+    </div>
   );
 }
